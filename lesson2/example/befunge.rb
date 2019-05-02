@@ -93,6 +93,7 @@ class Machine
       end
       @pc.move
     end
+    p @stack
     @stack.last
   end
 
@@ -112,6 +113,65 @@ class Machine
       @pc.move
     when '0'..'9'
       @stack.push instr.to_i
+    when '$'
+      @stack.pop
+    when '\\'
+      a = @stack.pop
+      b = @stack.pop
+      @stack.push a
+      @stack.push b
+    when ':'
+      a = @stack.pop
+      @stack.push a
+      @stack.push a
+    when '+'
+      @stack.push (@stack.pop + @stack.pop)
+    when '*'
+      @stack.push (@stack.pop * @stack.pop)
+    when '-'
+      a = @stack.pop
+      b = @stack.pop
+      @stack.push b - a
+    when '/'
+      a = @stack.pop
+      b = @stack.pop
+      @stack.push b / a
+    when '%'
+      a = @stack.pop
+      b = @stack.pop
+      @stack.push b % a
+    when '!'
+      @stack.push @stack.pop == 0 ? 1 : 0
+    when '`'
+      a = @stack.pop
+      b = @stack.pop
+      @stack.push b > a ? 1 : 0
+    when '_'
+      if @stack.pop == 0
+        @pc.go_east
+      else
+        @pc.go_west
+      end
+    when '|'
+      if @stack.pop == 0
+        @pc.go_south
+      else
+        @pc.go_north
+      end
+    when 'g'
+      y = @stack.pop
+      x = @stack.pop
+      row = @program[y]
+      if row.nil?
+        @stack.push 0
+      else
+        @stack.push row[x].to_i
+      end
+    when 'p'
+      y = @stack.pop
+      x = @stack.pop
+      v = @stack.pop
+      @program[y][x] = v.chr
     end
     true
   end
