@@ -12,7 +12,7 @@ tests.sort.each do |test|
   lines.each do |line|
     if line.start_with?('#')
       parts = line[1..-1].split(':')
-      assertions[parts.first.to_sym] = parts.last.to_i
+      assertions[parts.first.to_sym] = parts.last.strip
     end
   end
 
@@ -35,13 +35,17 @@ tests.sort.each do |test|
 
   results = {}
   output.lines do |line|
-    parts = line.split(':')
-    results[parts.first.to_sym] = parts.last.to_i
+    if line.include?(':')
+      parts = line.split(':')
+      results[parts.first.to_sym] = parts.last.to_i
+    else
+      results[:out] = line.strip
+    end
   end
 
   passed = true
   assertions.each do |(kind, expect)|
-    if results[kind] != expect
+    if results[kind] != expect && results[kind] != expect.to_i
       passed = false
     end
   end

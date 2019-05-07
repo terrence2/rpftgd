@@ -20,6 +20,7 @@ fp.close
 
 max_line_length = lines.map(&:length).max
 program = lines.map { |line| line.ljust(max_line_length) }
+program = program.map {|line| line.chars.map {|c| c.ord}}
 
 class ProgramCounter
   def initialize(limit_x:, limit_y:)
@@ -93,12 +94,11 @@ class Machine
       end
       @pc.move
     end
-    p @stack
     @stack.last
   end
 
   def dispatch(instr)
-    case instr
+    case instr.chr
     when '@'
       return false
     when 'v'
@@ -112,7 +112,7 @@ class Machine
     when '#'
       @pc.move
     when '0'..'9'
-      @stack.push instr.to_i
+      @stack.push instr.chr.to_i
     when '$'
       @stack.pop
     when '\\'
@@ -165,13 +165,17 @@ class Machine
       if row.nil?
         @stack.push 0
       else
-        @stack.push row[x].to_i
+        @stack.push row[x]
       end
     when 'p'
       y = @stack.pop
       x = @stack.pop
       v = @stack.pop
-      @program[y][x] = v.chr
+      @program[y][x] = v
+    when '.'
+      puts @stack.pop
+    when ','
+      puts @stack.pop.chr
     end
     true
   end
