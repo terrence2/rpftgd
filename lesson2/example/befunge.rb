@@ -78,9 +78,9 @@ class Machine
   attr_accessor :instruction_count
 
   def initialize(program)
-    @program = program
+    @heap = program
     @stack = []
-    @pc = ProgramCounter.new(limit_x: @program[0].length, limit_y: @program.length)
+    @pc = ProgramCounter.new(limit_x: @heap[0].length, limit_y: @heap.length)
 
     @instruction_count = 0
   end
@@ -88,7 +88,7 @@ class Machine
   def eval
     while true
       @instruction_count += 1
-      instr = @program[@pc.y][@pc.x]
+      instr = @heap[@pc.y][@pc.x]
       if !dispatch(instr)
         break
       end
@@ -161,7 +161,7 @@ class Machine
     when 'g'
       y = @stack.pop
       x = @stack.pop
-      row = @program[y]
+      row = @heap[y]
       if row.nil?
         @stack.push 0
       else
@@ -171,7 +171,7 @@ class Machine
       y = @stack.pop
       x = @stack.pop
       v = @stack.pop
-      @program[y][x] = v
+      @heap[y][x] = v
     when '.'
       puts @stack.pop
     when ','
