@@ -1,0 +1,95 @@
+diff --git a/defs/id.def b/defs/id.def
+index 91a9768ad6..e936181278 100644
+--- a/defs/id.def
++++ b/defs/id.def
+@@ -99,6 +99,7 @@ token_ops = %[\
+   Not           !
+   And           &
+   Or            |
++  Smiley        :-)     SMILEY
+   Backquote     `
+   EqTilde       =~      MATCH
+   NeqTilde      !~      NMATCH
+diff --git a/parse.y b/parse.y
+index ff4fe986fe..b14a791631 100644
+--- a/parse.y
++++ b/parse.y
+@@ -928,6 +928,7 @@ static void token_info_warn(struct parser_params *p, const char *token, token_in
+ %token tASET		RUBY_TOKEN(ASET)   "[]="
+ %token tLSHFT		RUBY_TOKEN(LSHFT)  "<<"
+ %token tRSHFT		RUBY_TOKEN(RSHFT)  ">>"
++%token tSMILEY		RUBY_TOKEN(SMILEY) ":-)"
+ %token <id> tANDDOT	RUBY_TOKEN(ANDDOT) "&."
+ %token <id> tCOLON2	RUBY_TOKEN(COLON2) "::"
+ %token <id> tMETHREF	RUBY_TOKEN(METHREF) ".:"
+@@ -964,6 +965,7 @@ static void token_info_warn(struct parser_params *p, const char *token, token_in
+ %nonassoc tLBRACE_ARG
+ 
+ %nonassoc  modifier_if modifier_unless modifier_while modifier_until
++%left  tSMILEY
+ %left  keyword_or keyword_and
+ %right keyword_not
+ %nonassoc keyword_defined
+@@ -1856,6 +1858,7 @@ op		: '|'		{ ifndef_ripper($$ = '|'); }
+ 		| tNEQ		{ ifndef_ripper($$ = tNEQ); }
+ 		| tLSHFT	{ ifndef_ripper($$ = tLSHFT); }
+ 		| tRSHFT	{ ifndef_ripper($$ = tRSHFT); }
++		| tSMILEY	{ ifndef_ripper($$ = tSMILEY); }
+ 		| '+'		{ ifndef_ripper($$ = '+'); }
+ 		| '-'		{ ifndef_ripper($$ = '-'); }
+ 		| '*'		{ ifndef_ripper($$ = '*'); }
+@@ -2111,6 +2114,10 @@ arg		: lhs '=' arg_rhs
+ 		    {
+ 			$$ = call_bin_op(p, $1, idGTGT, $3, &@2, &@$);
+ 		    }
++		| arg tSMILEY arg
++		    {
++			$$ = call_bin_op(p, $1, idSmiley, $3, &@2, &@$);
++		    }
+ 		| arg tANDOP arg
+ 		    {
+ 			$$ = logop(p, idANDOP, $1, $3, &@2, &@$);
+@@ -8333,6 +8340,13 @@ parser_yylex(struct parser_params *p)
+ 
+       case ':':
+ 	c = nextc(p);
++        if (c == '-') {
++            int c2 = nextc(p);
++            if (c2 == ')') {
++                SET_LEX_STATE(EXPR_BEG);
++                return tSMILEY;
++            }
++        }
+ 	if (c == ':') {
+ 	    if (IS_BEG() || IS_lex_state(EXPR_CLASS) || IS_SPCARG(-1)) {
+ 		SET_LEX_STATE(EXPR_BEG);
+diff --git a/string.c b/string.c
+index 3bf6f42e2a..ec15bc5b96 100644
+--- a/string.c
++++ b/string.c
+@@ -1920,6 +1920,17 @@ rb_str_plus(VALUE str1, VALUE str2)
+     return str3;
+ }
+ 
++VALUE
++rb_str_smiley(VALUE str1, VALUE str2)
++{
++    const char* smiley = "\xF0\x9F\x99\x82";
++    VALUE rb_smiley = str_new_static(rb_cString, smiley, strlen(smiley), ENCINDEX_UTF_8);
++    OBJ_FREEZE_RAW(rb_smiley);
++
++    VALUE tmp = rb_str_plus(str1, rb_smiley);
++    return rb_str_plus(tmp, str2);
++}
++
+ /*
+  *  call-seq:
+  *     str * integer   -> new_str
+@@ -10974,6 +10985,7 @@ Init_String(void)
+     rb_define_method(rb_cString, "casecmp", rb_str_casecmp, 1);
+     rb_define_method(rb_cString, "casecmp?", rb_str_casecmp_p, 1);
+     rb_define_method(rb_cString, "+", rb_str_plus, 1);
++    rb_define_method(rb_cString, ":-)", rb_str_smiley, 1);
+     rb_define_method(rb_cString, "*", rb_str_times, 1);
+     rb_define_method(rb_cString, "%", rb_str_format_m, 1);
+     rb_define_method(rb_cString, "[]", rb_str_aref_m, -1);
