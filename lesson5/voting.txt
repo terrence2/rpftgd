@@ -1,0 +1,7 @@
+1) Make ruby module in Rust
+
+2) Add something to a Sane VM
+
+3) Look into a perf issue
+
+4) Write in votes
