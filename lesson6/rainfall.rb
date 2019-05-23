@@ -1,5 +1,3 @@
-require 'minitest/autorun'
-
 class Rainfall
   attr_reader :heights
 
@@ -21,12 +19,14 @@ class Rainfall
   end
 end
 
-describe Rainfall do
-  it 'must bark when spoken to' do
-    Rainfall.new([3, 0, 0, 2, 4]).calculate_volume.must_equal 7
-  end
-
-  it 'really long solution' do
-    Array.new(10000000) { rand(1..9) }
-  end
+SIZE = 1500
+ITERATIONS = 1000
+input = Array.new(SIZE) { rand(1..9) }
+rf = Rainfall.new(input)
+start_time = Time.now
+(1..ITERATIONS).each do |_|
+  rf.calculate_volume
 end
+elapsed_time = Time.now - start_time
+puts "short_operation() takes: #{elapsed_time / ITERATIONS * 1000000} us per iteration"
+
